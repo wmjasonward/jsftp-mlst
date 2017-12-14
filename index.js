@@ -21,12 +21,12 @@ module.exports = function(jsftp) {
    * this helper will only go to millisecond precision - anything else is rounded
    *
    * @param {string} timeval - The ftp time-val (probably from a mlst fact)
-   * @returns {string} The "iso" formatted string
+   * @returns {string} The "iso" formatted string - null if the timeval didn't match expected format
    */
   function ftpTimeValToIsoDate(timeval) {
     var parts = timeval.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\.\d+)?$/);
     if (!(parts && parts.length > 0)) {
-      throw new Error("Unable to parse ftp time-val: " + timeval);
+      return null;
     }
 
     var millis = "";
@@ -40,18 +40,16 @@ module.exports = function(jsftp) {
   /**
    * Parse and Mlst entry (and, by extension Mlsd entry)
    *
+   *  Per Rfc - entry should look like
+   *   [ facts ] SP pathname
+   *   where facts is ; delimited list of facts
+   *
    * @param {string} entry entry line from ftp server (type=file;create=xxxxxxxxx;...)
    * @returns {object} entry facts
    */
   function parseMlstEntry(entry) {
-    var parts = entry.trim().split(" "); // separate the facts from the pathname
-    if (parts.length > 2) {
-      if (parts[0].length === 0) {
-        parts.shift();  // in case we had a space at the beginning
-      } else {
-        throw new Error("Mlst/Mlsd entry has too many parts: {" + entry + "}");
-      }
-    }
+    // split the entry (some servers add a space at the beginning of mlsd entries, so trim it)
+    var parts = entry.trim().split(" ");
 
     var response = {};
     if (parts.length > 1 && parts[1].length > 0) { // may not have a pathname if none was specified in command
@@ -69,6 +67,9 @@ module.exports = function(jsftp) {
           case "create":
           case "modify":
             response[factname + "_dt"] = ftpTimeValToIsoDate(factvalue);
+            if (response[factname + "_dt"] === null) {
+              response[factname + '_error'] = 'Unable to parse timeval';
+            }
             break;
         }
         response[factname] = factvalue;

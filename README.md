@@ -12,7 +12,9 @@ Be sure to check that the Ftp server supports MLST/MLSD feature before using thi
 If present in the MLST/MLSD response entries, `Create` and `Modify` facts are
 parsed and the attributes `create_dt` and `modify_dt`, respectively,
 are added to the entry object.
-`create_dt` and `modify_dt` are ISO 8601 combined date and time strings in UTC. 
+`create_dt` and `modify_dt` are ISO 8601 combined date and time strings in UTC.
+If `Create` and/or `Modify` cannot be parsed, `create_error` and/or `modify_error`
+ messages, as appropriate, will added to the Entry object. 
 
 Fact names are normalized to lower case in the entry objects.
 
@@ -127,11 +129,6 @@ I tried to stick to the language support and eslint config of the
 jsftp project for consistency.
 
 ##### To-Do
-
-I need to clean up the error handling around parsing of dates
-as well as any errors with individual entries of an MLSD response.
-Currently there are a couple of 'throws' in there which is inconsistent
-with the error handling pattern of jsftp.
 
 Add tests :) My current tests (not included in the repo) rely
 on a couple of remote ftp servers I control that support MLST. I need to
