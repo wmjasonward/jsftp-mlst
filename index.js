@@ -1,3 +1,12 @@
+/* vim:set ts=2 sw=2 sts=2 expandtab */
+/*global require: true module: true */
+/*
+ * @package jsftp-mlst
+ * @copyright Copyright(c) 2017 Jason Ward
+ * @author Jason Ward <wmjasonward@gmail.com>
+ * @license https://github.com/wmjasonward/jsftp-mlst/blob/master/LICENSE
+ */
+
 "use strict";
 var once = require("once");
 var inherits = require("util").inherits;
