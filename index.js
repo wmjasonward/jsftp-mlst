@@ -9,7 +9,6 @@
 
 "use strict";
 var once = require("once");
-var inherits = require("util").inherits;
 
 module.exports = function(jsftp) {
 
