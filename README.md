@@ -1,5 +1,5 @@
 # jsftp-mlst
-Decorate JSFtp with some checksum support
+Decorate JSFtp with MLST/MLSD support
 
 See:
 
@@ -83,7 +83,7 @@ Ftp.mlsd('/', (err, entries) => {
   } else {
     console.log(entry);
         // Prints something like
-        // [{ pathname: '/myfile.txt',
+        // [{ pathname: 'myfile.txt',
         //   modify_dt: '2017-06-14T20:06:11+00:00',
         //   modify: '20170614200611',
         //   perm: 'adfrw',
