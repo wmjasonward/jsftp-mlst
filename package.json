@@ -1,0 +1,40 @@
+{
+  "name": "jsftp-mlst",
+  "version": "1.0.0",
+  "description": "Adds MLST/MLSD support to JsFtp",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wmjasonward/jsftp-mlst.git"
+  },
+  "keywords": [
+    "node",
+    "ftp",
+    "jsftp",
+    "mlst",
+    "mlsd",
+    "rfc3659"
+  ],
+  "author": "Jason Ward",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wmjasonward/jsftp-mlst/issues"
+  },
+  "homepage": "https://github.com/wmjasonward/jsftp-mlst#readme",
+  "devDependencies": {
+    "eslint": "^4.13.1",
+    "eslint-plugin-security": "^1.4.0",
+    "mocha": "^4.0.1",
+    "nyc": "^11.3.0",
+    "sinon": "^4.1.3"
+  },
+  "peerDependencies": {
+    "jsftp": "2.x"
+  },
+  "dependencies": {
+    "once": "^1.4.0"
+  }
+}
