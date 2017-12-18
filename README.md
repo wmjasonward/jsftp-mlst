@@ -1,7 +1,7 @@
 # jsftp-mlst
-Decorate JSFtp with MLST/MLSD support
+Adds MLST/MLSD support to JSFtp for ftp servers that support the 'MSLT' feature.
 
-See:
+Reference:
 
 [JSFtp Homepage](https://github.com/sergi/jsftp "JSFtp Homepage")
 
@@ -9,12 +9,12 @@ See:
 
 Be sure to check that the Ftp server supports MLST/MLSD feature before using this.
 
-If present in the MLST/MLSD response entries, `Create` and `Modify` facts are
+If present in the MLST/MLSD server response entries, `Create` and `Modify` facts are
 parsed and the attributes `create_dt` and `modify_dt`, respectively,
 are added to the entry object.
 `create_dt` and `modify_dt` are ISO 8601 combined date and time strings in UTC.
 If `Create` and/or `Modify` cannot be parsed, `create_error` and/or `modify_error`
- messages, as appropriate, will added to the Entry object. 
+ messages, as appropriate, will added to the Entry object.
 
 Fact names are normalized to lower case in the entry objects.
 
@@ -47,13 +47,32 @@ an MLST entry for the current working directory.
 
 ```javascript
 
-Ftp.mlst('myfile.txt', (err, entry) => {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log(entry);
+"use strict";
+
+/**
+ * Example using mlst
+ */
+
+const jsftp = require('jsftp');
+require('jsftp-mlst')(jsftp);
+
+const Ftp = new jsftp({
+  host: 'your.ftpserver.com',
+  user: 'ftpusername',
+  pass: 'ftppassword',
+});
+
+
+Ftp.on('connect', function() {
+  Ftp.mlst('myfile.txt', (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(result);
     // Prints something like
     // { pathname: '/myfile.txt',
+    //   create_dt: '2017-06-14T20:06:11+00:00',
+    //   create: '20170614200611',
     //   modify_dt: '2017-06-14T20:06:11+00:00',
     //   modify: '20170614200611',
     //   perm: 'adfrw',
@@ -63,8 +82,12 @@ Ftp.mlst('myfile.txt', (err, entry) => {
     //   'unix.group': '501',
     //   'unix.mode': '0644',
     //  'unix.owner': '501' }
-  }
+    }
+
+    Ftp.destroy();
+  });
 });
+
 ```
 
 ##### Ftp.mlsd(pathname, callback)
@@ -79,42 +102,63 @@ for each item in the directory (usually includes the dir itself).
 `pathname` is optional. If omitted, the server is expected to return the contents of the current working directory.
 
 ```javascript
-Ftp.mlsd('/', (err, entries) => {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log(entry);
-        // Prints something like
-        // [{ pathname: 'myfile.txt',
-        //   modify_dt: '2017-06-14T20:06:11+00:00',
-        //   modify: '20170614200611',
-        //   perm: 'adfrw',
-        //   size: '2291365',
-        //   type: 'file',
-        //   unique: 'ca032380be1',
-        //   'unix.group': '501',
-        //   'unix.mode': '0644',
-        //  'unix.owner': '501' },
-        // { pathname: '..',
-        //   modify_dt: '2017-06-14T20:06:19+00:00',
-        //   modify: '20170614200619',
-        //   perm: 'flcdmpe',
-        //   type: 'pdir',
-        //   unique: 'ca01u82148',
-        //   'unix.group': '501',
-        //   'unix.mode': '0700',
-        //   'unix.owner': '501' },
-        // { pathname: '.',
-        //   modify_dt: '2017-06-14T20:06:19+00:00',
-        //   modify: '20170614200619',
-        //   perm: 'flcdmpe',
-        //   type: 'cdir',
-        //   unique: 'ca01u82148',
-        //   'unix.group': '501',
-        //   'unix.mode': '0700',
-        //   'unix.owner': '501' }]
-  }
+
+"use strict";
+
+/**
+ * Example using mlsd
+ */
+
+const jsftp = require('jsftp');
+require('jsftp-mlst')(jsftp);
+
+const Ftp = new jsftp({
+  host: 'your.ftpserver.com',
+  user: 'ftpusername',
+  pass: 'ftppassword',
 });
+
+
+Ftp.on('connect', function() {
+  Ftp.mlsd('/', (err, entries) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(entries);
+          // Prints something like
+          // [{ pathname: 'myfile.txt',
+          //   modify_dt: '2017-06-14T20:06:11+00:00',
+          //   modify: '20170614200611',
+          //   perm: 'adfrw',
+          //   size: '2291365',
+          //   type: 'file',
+          //   unique: 'ca032380be1',
+          //   'unix.group': '501',
+          //   'unix.mode': '0644',
+          //  'unix.owner': '501' },
+          // { pathname: '..',
+          //   modify_dt: '2017-06-14T20:06:19+00:00',
+          //   modify: '20170614200619',
+          //   perm: 'flcdmpe',
+          //   type: 'pdir',
+          //   unique: 'ca01u82148',
+          //   'unix.group': '501',
+          //   'unix.mode': '0700',
+          //   'unix.owner': '501' },
+          // { pathname: '.',
+          //   modify_dt: '2017-06-14T20:06:19+00:00',
+          //   modify: '20170614200619',
+          //   perm: 'flcdmpe',
+          //   type: 'cdir',
+          //   unique: 'ca01u82148',
+          //   'unix.group': '501',
+          //   'unix.mode': '0700',
+          //   'unix.owner': '501' }]
+    }
+    Ftp.destroy();
+  });
+});
+
 ```
 
 ##### Other Notes
@@ -123,7 +167,7 @@ OS Dependent Facts have a '.' in their names (see 'unix.xxx' facts in examples a
 If you need to read them you'll have to do something like:
 `entry['unix.mode']`
 
-MLSD/MLST implementations vary across Ftp servers. YMMV
+MLSD/MLST implementation specifics vary across Ftp servers. YMMV
 
 I tried to stick to the language support and eslint config of the
 jsftp project for consistency.
