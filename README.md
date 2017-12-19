@@ -207,6 +207,7 @@ const Ftp = new jsftp({
 
 Ftp.on("connect", function() {
   Ftp.getFeatures((err, features) => {
+    // ... IRL handle err from getFeatures here!
     if (features.some(feat => feat.startsWith("mlst"))) {
       // server has MLST/MLSD support!
       Ftp.mlst("/", (err, entries) => {
