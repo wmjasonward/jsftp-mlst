@@ -208,7 +208,7 @@ const Ftp = new jsftp({
 Ftp.on("connect", function() {
   Ftp.getFeatures((err, features) => {
     // ... IRL handle err from getFeatures here!
-    if (features.some(feat => feat.startsWith("mlst"))) {
+    if (features.some(feat => feat.startsWith("mlst"))) { // mlst needs to be lowercase here
       // server has MLST/MLSD support!
       Ftp.mlst("/", (err, entries) => {
         if (err) {
@@ -225,7 +225,7 @@ Ftp.on("connect", function() {
 });
 
 ```
-Of course, you could also just call `mlst` or `mlsd` and and handle the error
+Of course, you could also just call `mlst` or `mlsd` and handle the error
 that is passed to your callback if the server doesn't support it.
 
 Keep in mind that MLST support by the server implies MLSD support as well.
