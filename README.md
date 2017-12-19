@@ -7,7 +7,10 @@ Reference:
 
 [RFC 3659 - Extensions to FTP](https://tools.ietf.org/html/rfc3659#page-23 "rfc3659")
 
+---
+
 Be sure to check that the Ftp server supports MLST/MLSD feature before using this.
+ See [How To](#how-to-test-for-mlst-feature-support) below.
 
 If present in the MLST/MLSD server response entries, `Create` and `Modify` facts are
 parsed and the attributes `create_dt` and `modify_dt`, respectively,
@@ -53,18 +56,18 @@ an MLST entry for the current working directory.
  * Example using mlst
  */
 
-const jsftp = require('jsftp');
-require('jsftp-mlst')(jsftp);
+const jsftp = require("jsftp");
+require("jsftp-mlst")(jsftp);
 
 const Ftp = new jsftp({
-  host: 'your.ftpserver.com',
-  user: 'ftpusername',
-  pass: 'ftppassword',
+  host: "your.ftpserver.com",
+  user: "ftpusername",
+  pass: "ftppassword",
 });
 
 
-Ftp.on('connect', function() {
-  Ftp.mlst('myfile.txt', (err, result) => {
+Ftp.on("connect", function() {
+  Ftp.mlst("myfile.txt", (err, result) => {
     if (err) {
       console.log(err);
     } else {
@@ -109,18 +112,18 @@ for each item in the directory (usually includes the dir itself).
  * Example using mlsd
  */
 
-const jsftp = require('jsftp');
-require('jsftp-mlst')(jsftp);
+const jsftp = require("jsftp");
+require("jsftp-mlst")(jsftp);
 
 const Ftp = new jsftp({
-  host: 'your.ftpserver.com',
-  user: 'ftpusername',
-  pass: 'ftppassword',
+  host: "your.ftpserver.com",
+  user: "ftpusername",
+  pass: "ftppassword",
 });
 
 
-Ftp.on('connect', function() {
-  Ftp.mlsd('/', (err, entries) => {
+Ftp.on("connect", function() {
+  Ftp.mlsd("/", (err, entries) => {
     if (err) {
       console.log(err);
     } else {
@@ -167,7 +170,8 @@ OS Dependent Facts have a '.' in their names (see 'unix.xxx' facts in examples a
 If you need to read them you'll have to do something like:
 `entry['unix.mode']`
 
-MLSD/MLST implementation specifics vary across Ftp servers. YMMV
+MLSD/MLST implementation specifics vary across Ftp servers. The facts you receive
+may be quite different than the examples above.
 
 I tried to stick to the language support and eslint config of the
 jsftp project for consistency.
@@ -178,8 +182,49 @@ Add tests :) My current tests (not included in the repo) rely
 on a couple of remote ftp servers I control that support MLST. I need to
 create mock support for mlst/mlsd to test against.
 
-Figure out why Ftp.hasFeat doesn't seem to work. Not sure if there's
-an upstream problem or I'm just using it wrong. Ideally, you could
-call Ftp.hasFeat('MLST') to ensure the server supports the feature.
-As an alternative, create a `hasMlst` method that does a `Ftp.raw('feat'...)`
-and looks for MLST in the response.
+##### How To Test For MLST Feature Support
+
+The MLST feature has an extended format in the `FEAT` ftp command response so the
+`hasFeat` method from JsFTP doesn't properly detect it. Here's an example of my
+current recommendation for how to detect it:
+```javascript
+
+"use strict";
+
+/**
+ * Example checking for MLST support
+ */
+
+const jsftp = require("jsftp");
+require("jsftp-mlst")(jsftp);
+
+const Ftp = new jsftp({
+  host: "your.ftpserver.com",
+  user: "ftpusername",
+  pass: "ftppassword",
+});
+
+
+Ftp.on("connect", function() {
+  Ftp.getFeatures((err, features) => {
+    if (features.some(feat => feat.startsWith("mlst"))) {
+      // server has MLST/MLSD support!
+      Ftp.mlst("/", (err, entries) => {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log(entries);
+        }
+      });
+    } else {
+      // server does not support MLST/MLSD
+      console.log('server does not support MLST/MLSD');
+    }
+  });
+});
+
+```
+Of course, you could also just call `mlst` or `mlsd` and and handle the error
+that is passed to your callback if the server doesn't support it.
+
+Keep in mind that MLST support by the server implies MLSD support as well.

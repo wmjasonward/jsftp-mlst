@@ -178,21 +178,19 @@ module.exports = function(jsftp) {
           return callback(err);
         }
 
-        var isExpectedMark = this.expectedMarks.some(function(mark) {
+        const expectedMarks = {
+          marks: [150],
+          ignore: 226
+        };
+
+        const isExpectedMark = expectedMarks.marks.some(function(mark) {
           return mark === res.code;
         });
 
         if (!isExpectedMark) {
-          callback(new Error(
-            "Expected marks " + this.expectedMarks.toString() + " instead of: " +
-            res.text));
+          callback(new Error(`Expected marks ${expectedMarks.toString()} instead of: ${res.text}`));
         }
       }
-
-      cmdCallback.expectedMarks = {
-        marks: [150],
-        ignore: 226
-      };
 
       self.execute("MLSD " + (path || ""), cmdCallback);
     });

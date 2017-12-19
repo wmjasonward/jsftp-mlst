@@ -1,6 +1,6 @@
 {
   "name": "jsftp-mlst",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Adds MLST/MLSD support to JsFtp",
   "main": "index.js",
   "scripts": {
