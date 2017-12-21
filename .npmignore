@@ -2,5 +2,6 @@ coverage.html
 *.un~
 lib-cov
 reports
+.idea
 test
 node_modules
