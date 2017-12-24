@@ -37,7 +37,7 @@ module.exports = function(jsftp) {
   }
 
   /**
-   * Parse and Mlst entry (and, by extension Mlsd entry)
+   * Parse an Mlst entry (and, by extension, an Mlsd entry)
    *
    *  Per Rfc - entry should look like
    *   [ facts ] SP pathname
