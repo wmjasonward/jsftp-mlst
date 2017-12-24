@@ -19,7 +19,7 @@ module.exports = function(jsftp) {
    * RFC 3659 allows for arbitrary precision for parts of a second
    * this helper will only go to millisecond precision - anything else is rounded
    *
-   * @param {string} timeval - The ftp time-val (probably from a mlst fact)
+   * @param {string} timeval - The ftp time-val (probably from a mlst entry fact)
    * @returns {string} The "iso" formatted string - null if the timeval didn't match expected format
    */
   function ftpTimeValToIsoDate(timeval) {
@@ -30,7 +30,7 @@ module.exports = function(jsftp) {
 
     var millis = "";
     if (parts[7]) {
-      millis = "." + Math.round((parseFloat(parts[7]) * 1000));
+      millis = parseFloat(parts[7]).toFixed(3).substr(1);
     }
 
     return `${parts[1]}-${parts[2]}-${parts[3]}T${parts[4]}:${parts[5]}:${parts[6]}${millis}+00:00`;
@@ -92,8 +92,6 @@ module.exports = function(jsftp) {
       callback = arguments[0];
       path = "";
     }
-
-    var self = this;
 
     this.raw("MLST " + path, function(err, response) {
       if (err) {
