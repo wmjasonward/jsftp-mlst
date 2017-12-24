@@ -30,6 +30,7 @@ module.exports = function(jsftp) {
 
     var millis = "";
     if (parts[7]) {
+      // this assumes toFixed(3) will always include the leading 0? Any different in other locales?
       millis = parseFloat(parts[7]).toFixed(3).substr(1);
     }
 
@@ -47,11 +48,11 @@ module.exports = function(jsftp) {
    * @returns {object} entry facts
    */
   function parseMlstEntry(entry) {
-    // split the entry (some servers add a space at the beginning of mlsd entries, so trim it)
+    // trim, then split the entry (mlst requires space at beginning, some servers one on mlsd entries as well)
     var parts = entry.trim().split(" ");
 
     var response = {};
-    if (parts.length > 1 && parts[1].length > 0) { // may not have a pathname if none was specified in command
+    if (parts.length > 1 && parts[1].length > 0) { // may not have a pathname if none was specified in command (see 7.3.1 in rfc)
       response["pathname"] = parts[1];
     }
 
@@ -60,7 +61,7 @@ module.exports = function(jsftp) {
       var fe = facts[i].indexOf("="); // doing this way - rather than split - in case there can be an "=" in the fact value
       if (fe > 0) { // if nothing before the = - not really usable anyway
         var factname = facts[i].substr(0, fe).toLowerCase();
-        var factvalue = facts[i].substr(fe + 1).toLowerCase();
+        var factvalue = facts[i].substr(fe + 1);
 
         switch (factname) {
           case "create":

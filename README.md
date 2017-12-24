@@ -10,10 +10,10 @@ Reference:
 ---
 
 Be sure to check that the Ftp server supports MLST/MLSD feature before using this.
- See [How To](#how-to-test-for-mlst-feature-support) below.
+ See [How To](#how-to-test-for-mlst-feature-support) below. MLST support by the server implies MLSD support as well.
 
-If present in the MLST/MLSD server response entries, `Create` and `Modify` facts are
-parsed and the attributes `create_dt` and `modify_dt`, respectively,
+If the `Create` and `Modify` facts are present in the MLST/MLSD server,
+ they are parsed and the attributes `create_dt` and `modify_dt`, respectively,
 are added to the entry object.
 `create_dt` and `modify_dt` are ISO 8601 combined date and time strings in UTC.
 If `Create` and/or `Modify` cannot be parsed, `create_error` and/or `modify_error`
@@ -178,9 +178,7 @@ jsftp project for consistency.
 
 ##### To-Do
 
-Add tests :) My current tests (not included in the repo) rely
-on a couple of remote ftp servers I control that support MLST. I need to
-create mock support for mlst/mlsd to test against.
+Continue adding tests
 
 ##### How To Test For MLST Feature Support
 
@@ -227,5 +225,3 @@ Ftp.on("connect", function() {
 ```
 Of course, you could also just call `mlst` or `mlsd` and handle the error
 that is passed to your callback if the server doesn't support it.
-
-Keep in mind that MLST support by the server implies MLSD support as well.
