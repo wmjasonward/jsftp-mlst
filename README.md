@@ -21,19 +21,9 @@ If `Create` and/or `Modify` cannot be parsed, `create_error` and/or `modify_erro
 
 Fact names are normalized to lower case in the entry objects.
 
-#### Starting it up
 
-```javascript
-var JSFtp = require("jsftp");
-require('jsftp-mlst')(JSFtp);
+---
 
-var Ftp = new JSFtp({
-  host: "myserver.com",
-  port: 3331, // defaults to 21
-  user: "user", // defaults to "anonymous"
-  pass: "1234" // defaults to "@anonymous"
-});
-```
 
 #### Added Methods
 
@@ -179,6 +169,10 @@ jsftp project for consistency.
 ##### To-Do
 
 Continue adding tests
+
+
+---
+
 
 ##### How To Test For MLST Feature Support
 
