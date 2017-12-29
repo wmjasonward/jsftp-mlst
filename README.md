@@ -12,7 +12,7 @@ Reference:
 Be sure to check that the Ftp server supports MLST/MLSD feature before using this.
  See [How To](#how-to-test-for-mlst-feature-support) below. MLST support by the server implies MLSD support as well.
 
-If the `Create` and `Modify` facts are present in the MLST/MLSD server,
+If the `Create` and `Modify` facts are present in the MLST/MLSD server response,
  they are parsed and the attributes `create_dt` and `modify_dt`, respectively,
 are added to the entry object.
 `create_dt` and `modify_dt` are ISO 8601 combined date and time strings in UTC.
