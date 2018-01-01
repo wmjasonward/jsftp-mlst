@@ -166,10 +166,6 @@ may be quite different than the examples above.
 I tried to stick to the language support and eslint config of the
 jsftp project for consistency.
 
-##### To-Do
-
-Continue adding tests
-
 
 ---
 

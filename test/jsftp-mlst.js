@@ -1,10 +1,24 @@
 /* vim:set ts=2 sw=2 sts=2 expandtab */
 /*global require: true module: true */
-/*
-  * This sets up a local server just so we can construct jsftp
+/**
+  *
+  * To run these tests against an external ftp server set the following env vars:
+  *
+  * FTP_HOST
+  * FTP_USER
+  * FTP_PASS
+  * FTP_PORT (optional)
+  *
+  * If FTP_HOST is not set, we create a local server just so we can construct jsftp
   * The ftpd package does not support mlst/mlsd so we just mock those
   * responses (we're not testing the ftp server here, just our ability to
   * handle an expected response from the server)
+  *
+  * If you specify FTP_HOST, the MLST and MLSD commands will be issued to the server
+  *  where specified..
+  *
+  * We'll need to mock mlsd to round out our code coverage
+  *   Perhaps mitm would be easier than adding real support to ftpd
   *
   * @package jsftp-mlst
   * @copyright Copyright(c) 2017 Jason Ward
@@ -27,10 +41,10 @@ const options = {
   // pass: "12345",
   // host: process.env.IP || "127.0.0.1",
   // port: process.env.PORT || 7002,
-  user: "user",
-  pass: "12345",
-  host: process.env.IP || "127.0.0.1",
-  port: process.env.PORT || 7002,
+  user: process.env.FTP_USER || "user",
+  pass: process.env.FTP_PASS || "12345",
+  host: process.env.FTP_HOST || "127.0.0.1",
+  port: process.env.FTP_PORT || (process.env.FTP_HOST ? 21 : 7002),
 };
 
 const testEntries = [
@@ -81,6 +95,22 @@ const testEntries = [
       "unix.group": "501",
       "unix.owner": "501",
       "unix.mode": "0700"
+    },
+  },
+  {
+    description: "parses single fact mlst entry with trailing semi-colon",
+    entry: "modify=20170614200619;",
+    expects: {
+      modify: "20170614200619",
+      modify_dt: "2017-06-14T20:06:19+00:00",
+    },
+  },
+  {
+    description: "parses mlst entry without trailing semi-colon",
+    entry: "modify=20170614200619",
+    expects: {
+      modify: "20170614200619",
+      modify_dt: "2017-06-14T20:06:19+00:00",
     },
   },
   {
@@ -146,12 +176,22 @@ describe("JsFTP Mlst/Mlsd Extension", function() {
   var _server;
 
   before(function(done) {
-    _server = ftpserver.makeServer(options);
-    _server.listen(options.port);
-    setTimeout(done, 100);
+    if (process.env.FTP_HOST) {
+      done();
+    } else { // run a local ftp server - not all tests are enabled
+      _server = ftpserver.makeServer(options);
+      _server.listen(options.port);
+      setTimeout(done, 100);
+    }
   });
 
-  after(done => _server.close(done));
+  after(done => {
+    if (_server) {
+      _server.close(done)
+    } else {
+      done();
+    }
+  });
 
   beforeEach(done => {
     ftp = new jsftp(options);
@@ -166,7 +206,7 @@ describe("JsFTP Mlst/Mlsd Extension", function() {
     done();
   });
 
-  describe("mlst entry parser", function() {
+  describe("mlst entry parser - mocked", function() {
     // ensure we parse entries as expected (with special focus on ftp timeval to iso date conversion)
     // we'll go through the mlst command to get to parseMlstEntry
     testEntries.forEach(entry => {
@@ -188,22 +228,31 @@ describe("JsFTP Mlst/Mlsd Extension", function() {
     });
   });
 
-  describe("mlst command", function() {
+  describe("mlst command - mocked", function() {
 
-    it("correctly errors when server sends error", function(done) {
-      // we're going to call ftpd with mlst and expect a command not supported type error
-      ftp.mlst((err, response) => {
+    it("errors when server sends error", function(done) {
+
+      sinon.stub(ftp, "raw").callsArgWith(1, null, {
+        code: 550,
+        text: "550 file not found", // ftp response parser returns \n rather than \r\n
+        isError: true,
+      });
+
+      ftp.mlst("surely-no-file-with-this-name.txt", (err, response) => {
         assert.ok(err, "expected error");
         assert.ok(err.code >= 500, "err.code should be >= 500");
         done();
       });
     });
 
-    it("correctly errors when response is not 3 lines", function(done) {
+    /*
+      todo: for version 2 consider swapping out the server response code with our own in this scenario
+     */
+    it("errors when response is not 3 lines", function(done) {
 
       sinon.stub(ftp, "raw").callsArgWith(1, null, {
         code: 250,
-        text: `250 booga banga`, // ftp response parser returns \n rather than \r\n
+        text: "250 booga banga", // ftp response parser returns \n rather than \r\n
         isError: false,
       });
 
@@ -214,21 +263,63 @@ describe("JsFTP Mlst/Mlsd Extension", function() {
 
     });
 
-    // todo: figure out how best to deal with this - currently response is an empty object
-    // it("correctly errors when response entry cannot be parsed", function (done) {
-    //
-    //   sinon.stub(ftp, "raw").callsArgWith(1, null, {
-    //     code: 250,
-    //     text: `250-Listing\n notavalidentry\n250 End.`,
-    //     isError: false,
-    //   });
-    //
-    //   ftp.mlst((err, response) => {
-    //     assert.ok(err, "expected error");  // reponse passes code 250 through (may change for version 2.0)
-    //     done();
-    //   });
-    //
-    // });
+    /*
+      todo: for version 2 consider raising an error for this rather than returning an empty response
+    */
+    it("returns an empty response object when facts cannot be parsed from server response", function (done) {
+
+      sinon.stub(ftp, "raw").callsArgWith(1, null, {
+        code: 250,
+        text: `250-Listing\n notavalidentry\n250 End.`,
+        isError: false,
+      });
+      const expects = {};
+
+      ftp.mlst((err, response) => {
+        assert.deepEqual(response, expects);
+        done();
+      });
+
+    });
+
+  });
+
+  // mlsd mock testing will require mitm or more complex mock since it uses a data connection as well
+
+  // be sure the server you're running against support MLST :)
+  describe("tests against live server", function() {
+    if (!process.env.FTP_HOST) {
+      this.skip();
+    }
+
+    it ("runs mlst command with no path", function(done) {
+
+      ftp.mlst((err, response) => {
+        assert.ok(!err, "received error");
+        assert.ok(Object.keys(response).length > 0, "no facts detected in response");
+        done();
+      });
+
+    });
+
+    it ("runs mlsd command with no path", function(done) {
+
+      ftp.mlsd((err, response) => {
+        assert.ok(!err, "received error");
+        assert.ok(Array.isArray(response) && response.length > 0 && Object.keys(response[0]).length > 0);
+        done();
+      });
+
+    });
+
+    it ("returns error on mlsd command error", function(done) {
+
+      ftp.mlsd("surelynofilewiththisname.txt", (err, response) => {
+        assert.ok(err, "expected error");
+        done();
+      });
+
+    });
 
   });
 
