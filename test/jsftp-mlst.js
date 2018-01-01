@@ -188,9 +188,48 @@ describe("JsFTP Mlst/Mlsd Extension", function() {
     });
   });
 
-  // todo mlst and mlsd command tests
-  // describe("mlst command", function() {
-  //
-  //
-  // });
+  describe("mlst command", function() {
+
+    it("correctly errors when server sends error", function(done) {
+      // we're going to call ftpd with mlst and expect a command not supported type error
+      ftp.mlst((err, response) => {
+        assert.ok(err, "expected error");
+        assert.ok(err.code >= 500, "err.code should be >= 500");
+        done();
+      });
+    });
+
+    it("correctly errors when response is not 3 lines", function(done) {
+
+      sinon.stub(ftp, "raw").callsArgWith(1, null, {
+        code: 250,
+        text: `250 booga banga`, // ftp response parser returns \n rather than \r\n
+        isError: false,
+      });
+
+      ftp.mlst((err, response) => {
+        assert(err, "expected error");
+        done();
+      });
+
+    });
+
+    // todo: figure out how best to deal with this - currently response is an empty object
+    // it("correctly errors when response entry cannot be parsed", function (done) {
+    //
+    //   sinon.stub(ftp, "raw").callsArgWith(1, null, {
+    //     code: 250,
+    //     text: `250-Listing\n notavalidentry\n250 End.`,
+    //     isError: false,
+    //   });
+    //
+    //   ftp.mlst((err, response) => {
+    //     assert.ok(err, "expected error");  // reponse passes code 250 through (may change for version 2.0)
+    //     done();
+    //   });
+    //
+    // });
+
+  });
+
 });
