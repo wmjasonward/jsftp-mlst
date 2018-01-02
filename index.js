@@ -178,16 +178,18 @@ module.exports = function(jsftp) {
         }
 
         const expectedMarks = {
-          marks: [150],
+          marks: [150, 226],
           ignore: 226
         };
-
+        // todo: figure out where we get 150 as the code and where we get 226
+        // todo: this little "expectedMark" concept is strange - research why it's done
+        //       this way in upstream "list" code
         const isExpectedMark = expectedMarks.marks.some(function(mark) {
           return mark === res.code;
         });
 
         if (!isExpectedMark) {
-          callback(new Error(`Expected marks ${expectedMarks.toString()} instead of: ${res.text}`));
+          callback(new Error(`Expected marks ${expectedMarks.marks.join(',')} instead of: ${res.text}`));
         }
       }
 
