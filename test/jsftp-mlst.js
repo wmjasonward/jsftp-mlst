@@ -288,9 +288,11 @@ describe("JsFTP Mlst/Mlsd Extension", function() {
 
   // be sure the server you're running against support MLST :)
   describe("tests against live server", function() {
-    if (!process.env.FTP_HOST) {
-      this.skip();
-    }
+    before(function() {
+      if (!process.env.FTP_HOST) {
+        this.skip();
+      }
+    });
 
     it ("runs mlst command with no path", function(done) {
 
