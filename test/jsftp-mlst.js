@@ -171,7 +171,7 @@ const testEntries = [
 
 ];
 
-describe("JsFTP Mlst/Mlsd Extension", function() {
+describe("JSFtp Mlst/Mlsd Extension", function() {
   var ftp;
   var _server;
 
