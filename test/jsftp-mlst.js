@@ -2,7 +2,7 @@
 /*global require: true module: true */
 /**
   *
-  * To run these tests against an external ftp server set the following env vars:
+  * To run these tests against an external ftp server, set the following env vars:
   *
   * FTP_HOST
   * FTP_USER
@@ -37,10 +37,6 @@ const ftpserver = require('./helpers/server');
 require("../index.js")(jsftp);
 
 const options = {
-  // user: "user",
-  // pass: "12345",
-  // host: process.env.IP || "127.0.0.1",
-  // port: process.env.PORT || 7002,
   user: process.env.FTP_USER || "user",
   pass: process.env.FTP_PASS || "12345",
   host: process.env.FTP_HOST || "127.0.0.1",
@@ -103,6 +99,24 @@ const testEntries = [
     expects: {
       modify: "20170614200619",
       modify_dt: "2017-06-14T20:06:19+00:00",
+    },
+  },
+  { // may want to pull out and test separately to be less dependent on error message
+    description: "sets modify_error if modified fact cannot be parsed",
+    entry: "modify=invalid;",
+    expects: {
+      modify: "invalid",
+      modify_dt: null,
+      modify_error: "Unable to parse timeval",
+    },
+  },
+  { // may want to pull out and test separately to be less dependent on error message
+    description: "sets create_error if create fact cannot be parsed",
+    entry: "Create=notavalidtimeval;",
+    expects: {
+      create: "notavalidtimeval",
+      create_dt: null,
+      create_error: "Unable to parse timeval",
     },
   },
   {
@@ -172,7 +186,6 @@ const testEntries = [
 ];
 
 describe("JSFtp Mlst/Mlsd Extension", function() {
-  var ftp;
   var _server;
 
   before(function(done) {
@@ -193,26 +206,37 @@ describe("JSFtp Mlst/Mlsd Extension", function() {
     }
   });
 
-  beforeEach(done => {
-    ftp = new jsftp(options);
-    ftp.once("connect", done);
-  });
+  describe("mlst entry parser - mocked server responses", function() {
+    let ftp;
+    let sandbox;
 
-  afterEach(done => {
-    if (ftp) {
-      ftp.destroy();
-      ftp = null;
-    }
-    done();
-  });
+    // construct a jsftp instance for this suite
+    before(done => {
+      ftp = new jsftp(options);
+      ftp.once("connect", done);
+    });
 
-  describe("mlst entry parser - mocked", function() {
+    after(done => {
+      if (ftp) {
+        ftp.destroy();
+        ftp = null;
+      }
+      done();
+    });
+
+    beforeEach(function() {
+      sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function() {
+      sandbox.restore();
+    });
+
     // ensure we parse entries as expected (with special focus on ftp timeval to iso date conversion)
     // we'll go through the mlst command to get to parseMlstEntry
     testEntries.forEach(entry => {
       it(entry.description, done => {
-        // mock a response from ftp.raw
-        sinon.stub(ftp, "raw").callsArgWith(1, null, {
+        sandbox.stub(ftp, "raw").callsArgWith(1, null, {
           code: 250,
           text: `250-Listing\n ${entry.entry}\n250 End.`, // ftp response parser returns \n rather than \r\n
           isError: false,
@@ -220,7 +244,6 @@ describe("JSFtp Mlst/Mlsd Extension", function() {
 
         ftp.mlst((err, response) => {
           assert.deepEqual(response, entry.expects);
-          ftp.raw.restore();
           done();
         });
 
@@ -228,7 +251,22 @@ describe("JSFtp Mlst/Mlsd Extension", function() {
     });
   });
 
-  describe("mlst command - mocked", function() {
+  describe("mlst command - mocked server responses", function() {
+    let ftp;
+
+    // construct a jsftp instance for this suite
+    before(done => {
+      ftp = new jsftp(options);
+      ftp.once("connect", done);
+    });
+
+    after(done => {
+      if (ftp) {
+        ftp.destroy();
+        ftp = null;
+      }
+      done();
+    });
 
     it("errors when server sends error", function(done) {
 
@@ -241,6 +279,7 @@ describe("JSFtp Mlst/Mlsd Extension", function() {
       ftp.mlst("surely-no-file-with-this-name.txt", (err, response) => {
         assert.ok(err, "expected error");
         assert.ok(err.code >= 500, "err.code should be >= 500");
+        ftp.raw.restore();
         done();
       });
     });
@@ -258,6 +297,7 @@ describe("JSFtp Mlst/Mlsd Extension", function() {
 
       ftp.mlst((err, response) => {
         assert(err, "expected error");
+        ftp.raw.restore();
         done();
       });
 
@@ -277,6 +317,7 @@ describe("JSFtp Mlst/Mlsd Extension", function() {
 
       ftp.mlst((err, response) => {
         assert.deepEqual(response, expects);
+        ftp.raw.restore();
         done();
       });
 
@@ -288,10 +329,26 @@ describe("JSFtp Mlst/Mlsd Extension", function() {
 
   // be sure the server you're running against support MLST :)
   describe("tests against live server", function() {
+    let ftp;
+
     before(function() {
       if (!process.env.FTP_HOST) {
         this.skip();
       }
+    });
+
+    // construct a jsftp instance for this suite (could go before/afterEach if needed)
+    before(done => {
+      ftp = new jsftp(options);
+      ftp.once("connect", done);
+    });
+
+    after(done => {
+      if (ftp) {
+        ftp.destroy();
+        ftp = null;
+      }
+      done();
     });
 
     it ("runs mlst command with no path", function(done) {
